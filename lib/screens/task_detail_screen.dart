@@ -10,11 +10,23 @@ class TaskDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final taskId = ModalRoute.of(context)?.settings.arguments as String?;
     final taskProvider = Provider.of<TaskProvider>(context);
-    
-    final task = taskProvider.tasks.firstWhere(
-      (t) => t.id == taskId,
-      orElse: () => taskProvider.tasks.first,
-    );
+
+    if (taskId == null || taskId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Detail Tugas')),
+        body: const Center(child: Text('Tugas tidak ditemukan.')),
+      );
+    }
+
+    final taskIndex = taskProvider.tasks.indexWhere((t) => t.id == taskId);
+    if (taskIndex == -1) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Detail Tugas')),
+        body: const Center(child: Text('Data tugas telah dihapus.')),
+      );
+    }
+
+    final task = taskProvider.tasks[taskIndex];
 
     return Scaffold(
       appBar: AppBar(
@@ -30,23 +42,40 @@ class TaskDetailScreen extends StatelessWidget {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Hapus Tugas'),
-                  content: const Text('Apakah Anda yakin ingin menghapus tugas ini?'),
+                  title: const Text('Konfirmasi Hapus'),
+                  content: Text('Apakah Anda yakin ingin menghapus tugas "${task.title}" dari database?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
                       child: const Text('Batal'),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        taskProvider.deleteTask(task.id!);
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: () async {
                         Navigator.pop(ctx);
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Tugas berhasil dihapus')),
-                        );
+                        try {
+                          await taskProvider.deleteTask(task.id!);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Tugas berhasil dihapus dari Supabase!'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal menghapus tugas: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       },
-                      child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+                      child: const Text('Hapus', style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
@@ -73,7 +102,11 @@ class TaskDetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               task.title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+              ),
             ),
             const SizedBox(height: 8),
             Chip(
@@ -82,7 +115,7 @@ class TaskDetailScreen extends StatelessWidget {
             ),
             const Divider(height: 32),
             const Text(
-              'Deskripsi:',
+              'Deskripsi Tugas:',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
