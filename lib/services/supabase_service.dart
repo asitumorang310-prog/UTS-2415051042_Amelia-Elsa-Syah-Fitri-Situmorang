@@ -33,4 +33,29 @@ class SupabaseService {
       throw Exception('Gagal menyimpan tugas baru ke Supabase: $e');
     }
   }
+
+  // Update data tugas di Supabase
+  Future<TaskModel> updateTask(String id, TaskModel task) async {
+    try {
+      final response = await _client
+          .from('tasks')
+          .update(task.toJson())
+          .eq('id', id)
+          .select()
+          .single();
+
+      return TaskModel.fromJson(response);
+    } catch (e) {
+      throw Exception('Gagal memperbarui tugas di Supabase: $e');
+    }
+  }
+
+  // Delete data tugas dari Supabase
+  Future<void> deleteTask(String id) async {
+    try {
+      await _client.from('tasks').delete().eq('id', id);
+    } catch (e) {
+      throw Exception('Gagal menghapus tugas dari Supabase: $e');
+    }
+  }
 }

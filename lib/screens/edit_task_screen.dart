@@ -19,14 +19,16 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   late String taskId;
   late TaskModel currentTask;
   bool isInit = false;
+  bool _isLoading = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!isInit) {
       final args = ModalRoute.of(context)?.settings.arguments;
-      taskId = args != null ? args as String : '1';
+      taskId = args != null ? args as String : '';
       final provider = Provider.of<TaskProvider>(context, listen: false);
+      
       currentTask = provider.tasks.firstWhere(
         (t) => t.id == taskId,
         orElse: () => provider.tasks.first,
@@ -40,25 +42,45 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     }
   }
 
-  void _updateData() {
+  Future<void> _updateData() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
       final updated = TaskModel(
         id: currentTask.id,
-        title: _titleController.text,
-        category: _categoryController.text,
-        description: _descriptionController.text,
+        title: _titleController.text.trim(),
+        category: _categoryController.text.trim(),
+        description: _descriptionController.text.trim(),
         priority: _priority,
         dueDate: currentTask.dueDate,
         isCompleted: currentTask.isCompleted,
       );
 
-      Provider.of<TaskProvider>(context, listen: false).updateTask(currentTask.id!, updated);
+      try {
+        await Provider.of<TaskProvider>(context, listen: false)
+            .updateTask(currentTask.id!, updated);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Perubahan berhasil diperbarui!')),
-      );
-
-      Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Perubahan data berhasil diperbarui di Supabase!'),
+              backgroundColor: Colors.blue,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal memperbarui data: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -78,13 +100,13 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                   labelText: 'Judul Tugas',
                   border: OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+                validator: (val) => val == null || val.trim().isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _categoryController,
                 decoration: const InputDecoration(
-                  labelText: 'Mata Kuliah',
+                  labelText: 'Mata Kuliah / Kategori',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -111,11 +133,17 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _updateData,
+                onPressed: _isLoading ? null : _updateData,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
                 ),
-                child: const Text('Perbarui Tugas'),
+                child: _isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Perbarui Tugas'),
               ),
             ],
           ),

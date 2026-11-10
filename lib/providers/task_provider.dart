@@ -47,7 +47,6 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Fitur Create Data ke Supabase
   Future<void> addTask(TaskModel task) async {
     _status = TaskStatus.loading;
     notifyListeners();
@@ -65,29 +64,26 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  void setSearchQuery(String query) {
-    _searchQuery = query;
-    notifyListeners();
-  }
-
-  void setCategoryFilter(String category) {
-    _selectedCategory = category;
-    notifyListeners();
-  }
-
-  void updateTask(String id, TaskModel updatedTask) {
-    final index = _tasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      _tasks[index] = updatedTask;
-      notifyListeners();
+  // Update Feature (Tahap 11)
+  Future<void> updateTask(String id, TaskModel updatedTask) async {
+    try {
+      final result = await _repository.updateTask(id, updatedTask);
+      final index = _tasks.indexWhere((t) => t.id == id);
+      if (index != -1) {
+        _tasks[index] = result;
+        notifyListeners();
+      }
+    } catch (e) {
+      rethrow;
     }
   }
 
-  void toggleTaskCompletion(String id) {
+  // Toggle Complete status ke Database
+  Future<void> toggleTaskCompletion(String id) async {
     final index = _tasks.indexWhere((t) => t.id == id);
     if (index != -1) {
       final task = _tasks[index];
-      _tasks[index] = TaskModel(
+      final updatedTask = TaskModel(
         id: task.id,
         title: task.title,
         description: task.description,
@@ -96,12 +92,35 @@ class TaskProvider extends ChangeNotifier {
         dueDate: task.dueDate,
         isCompleted: !task.isCompleted,
       );
-      notifyListeners();
+
+      try {
+        final result = await _repository.updateTask(id, updatedTask);
+        _tasks[index] = result;
+        notifyListeners();
+      } catch (e) {
+        notifyListeners();
+      }
     }
   }
 
-  void deleteTask(String id) {
-    _tasks.removeWhere((t) => t.id == id);
+  // Delete Feature (Tahap 12)
+  Future<void> deleteTask(String id) async {
+    try {
+      await _repository.deleteTask(id);
+      _tasks.removeWhere((t) => t.id == id);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void setCategoryFilter(String category) {
+    _selectedCategory = category;
     notifyListeners();
   }
 }
