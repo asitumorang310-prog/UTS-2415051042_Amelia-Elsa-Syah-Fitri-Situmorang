@@ -1,41 +1,24 @@
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
+import '../repositories/task_repository.dart';
 
-enum TaskState { initial, loading, loaded, error }
+enum TaskStatus { initial, loading, loaded, error }
 
 class TaskProvider extends ChangeNotifier {
-  TaskState _state = TaskState.loaded;
+  final TaskRepository _repository = TaskRepository();
+
+  TaskStatus _status = TaskStatus.initial;
   String _errorMessage = '';
   String _searchQuery = '';
   String _selectedCategory = 'Semua';
 
-  final List<TaskModel> _tasks = [
-    TaskModel(
-      id: '1',
-      title: 'Laporan Praktikum Mobile',
-      description: 'Menyelesaikan mini project TaskMate menggunakan Provider dan Supabase.',
-      category: 'Pemrograman Mobile',
-      priority: 'High',
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-      isCompleted: false,
-    ),
-    TaskModel(
-      id: '2',
-      title: 'Makalah Etika Profesi',
-      description: 'Menyusun kajian etika profesi dalam bidang teknologi informasi.',
-      category: 'Umum',
-      priority: 'Medium',
-      dueDate: DateTime.now().add(const Duration(days: 5)),
-      isCompleted: true,
-    ),
-  ];
+  List<TaskModel> _tasks = [];
 
-  TaskState get state => _state;
+  TaskStatus get status => _status;
   String get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
   String get selectedCategory => _selectedCategory;
 
-  // Shared State: Filter pencarian dan kategori
   List<TaskModel> get tasks {
     return _tasks.where((task) {
       final matchesCategory = _selectedCategory == 'Semua' || task.category == _selectedCategory;
@@ -49,6 +32,39 @@ class TaskProvider extends ChangeNotifier {
   int get completedCount => _tasks.where((t) => t.isCompleted).length;
   int get pendingCount => _tasks.where((t) => !t.isCompleted).length;
 
+  Future<void> fetchTasksFromDatabase() async {
+    _status = TaskStatus.loading;
+    _errorMessage = '';
+    notifyListeners();
+
+    try {
+      _tasks = await _repository.fetchTasks();
+      _status = TaskStatus.loaded;
+    } catch (e) {
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      _status = TaskStatus.error;
+    }
+    notifyListeners();
+  }
+
+  // Create Data (Insert ke Supabase + State Update)
+  Future<void> addTask(TaskModel task) async {
+    _status = TaskStatus.loading;
+    notifyListeners();
+
+    try {
+      final newTask = await _repository.createTask(task);
+      _tasks.insert(0, newTask);
+      _status = TaskStatus.loaded;
+      notifyListeners();
+    } catch (e) {
+      _status = TaskStatus.error;
+      _errorMessage = e.toString().replaceAll('Exception: ', '');
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   void setSearchQuery(String query) {
     _searchQuery = query;
     notifyListeners();
@@ -56,11 +72,6 @@ class TaskProvider extends ChangeNotifier {
 
   void setCategoryFilter(String category) {
     _selectedCategory = category;
-    notifyListeners();
-  }
-
-  void addTask(TaskModel task) {
-    _tasks.insert(0, task);
     notifyListeners();
   }
 

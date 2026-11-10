@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/task_provider.dart';
 import 'providers/quote_provider.dart';
 import 'screens/main_navigation_screen.dart';
@@ -9,11 +10,19 @@ import 'screens/add_task_screen.dart';
 import 'screens/edit_task_screen.dart';
 import 'screens/profile_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inisialisasi Supabase SDK dengan URL dan Key milik Amelia
+  await Supabase.initialize(
+    url: 'https://zrzvmvbcavaivqismdto.supabase.co',
+    anonKey: 'sb_publishable_-S1U4PTGwXueX3hqoIl1Ng_NmSzzejY',
+  );
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => TaskProvider()..fetchTasksFromDatabase()),
         ChangeNotifierProvider(create: (_) => QuoteProvider()..fetchQuote()),
       ],
       child: const TaskMateApp(),

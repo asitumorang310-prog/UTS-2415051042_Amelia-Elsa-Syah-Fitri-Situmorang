@@ -16,25 +16,44 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final _categoryController = TextEditingController();
   final _descriptionController = TextEditingController();
   String _priority = 'Medium';
+  bool _isLoading = false;
 
-  void _submitData() {
+  Future<void> _submitData() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
       final newTask = TaskModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text,
-        category: _categoryController.text,
-        description: _descriptionController.text,
+        title: _titleController.text.trim(),
+        category: _categoryController.text.trim(),
+        description: _descriptionController.text.trim(),
         priority: _priority,
         dueDate: DateTime.now().add(const Duration(days: 3)),
       );
 
-      Provider.of<TaskProvider>(context, listen: false).addTask(newTask);
+      try {
+        await Provider.of<TaskProvider>(context, listen: false).addTask(newTask);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tugas baru berhasil disimpan!')),
-      );
-
-      Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Tugas baru berhasil disimpan ke database!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Gagal menyimpan tugas: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -54,7 +73,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   labelText: 'Judul Tugas',
                   border: OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+                validator: (val) => val == null || val.trim().isEmpty ? 'Judul tugas wajib diisi' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -63,7 +82,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   labelText: 'Mata Kuliah / Kategori',
                   border: OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+                validator: (val) => val == null || val.trim().isEmpty ? 'Kategori wajib diisi' : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -88,11 +107,13 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _submitData,
+                onPressed: _isLoading ? null : _submitData,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(50),
                 ),
-                child: const Text('Simpan Tugas'),
+                child: _isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text('Simpan Tugas Ke Database'),
               ),
             ],
           ),
