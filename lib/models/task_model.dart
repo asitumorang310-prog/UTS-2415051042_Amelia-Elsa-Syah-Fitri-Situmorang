@@ -24,7 +24,9 @@ class TaskModel {
       description: json['description'] ?? '',
       category: json['category'] ?? 'Umum',
       priority: json['priority'] ?? 'Medium',
-      dueDate: DateTime.parse(json['due_date']),
+      dueDate: json['due_date'] != null
+          ? DateTime.parse(json['due_date'])
+          : DateTime.now(),
       isCompleted: json['is_completed'] ?? false,
     );
   }
