@@ -36,7 +36,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Tugas baru berhasil disimpan ke database!'),
+              content: Text('Tugas baru berhasil disimpan ke Supabase!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -112,7 +112,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
                   minimumSize: const Size.fromHeight(50),
                 ),
                 child: _isLoading
-                    ? const CircularProgressIndicator()
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
                     : const Text('Simpan Tugas Ke Database'),
               ),
             ],

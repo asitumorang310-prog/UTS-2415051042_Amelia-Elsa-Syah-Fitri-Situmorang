@@ -160,7 +160,7 @@ class HomeScreen extends StatelessWidget {
                 Icon(Icons.format_quote, size: 20, color: Colors.indigo),
                 SizedBox(width: 8),
                 Text(
-                  'Motivasi Harian (REST API)',
+                  'Motivasi Harian',
                   style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
                 ),
               ],

@@ -2,7 +2,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/task_model.dart';
 
 class SupabaseService {
-  // Menggunakan getter agar Supabase.instance baru diakses saat query dijalankan
   SupabaseClient get _client => Supabase.instance.client;
 
   // Read data dari Supabase
