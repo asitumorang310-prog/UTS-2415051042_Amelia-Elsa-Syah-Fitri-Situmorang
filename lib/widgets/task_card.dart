@@ -8,6 +8,7 @@ class TaskCard extends StatelessWidget {
   final String priority;
   final bool isCompleted;
   final VoidCallback onTap;
+  final VoidCallback onToggle;
 
   const TaskCard({
     super.key,
@@ -17,6 +18,7 @@ class TaskCard extends StatelessWidget {
     required this.priority,
     required this.isCompleted,
     required this.onTap,
+    required this.onToggle,
   });
 
   @override
@@ -24,21 +26,27 @@ class TaskCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 1.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: onTap,
-        leading: Icon(
-          isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: isCompleted ? Colors.green : Colors.grey,
+        leading: IconButton(
+          icon: Icon(
+            isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+            color: isCompleted ? Colors.green : Colors.grey,
+            size: 26,
+          ),
+          onPressed: onToggle,
+          tooltip: isCompleted ? 'Tandai Belum Selesai' : 'Tandai Selesai',
         ),
         title: Text(
           title,
           style: TextStyle(
             decoration: isCompleted ? TextDecoration.lineThrough : null,
+            color: isCompleted ? Colors.grey : Colors.black87,
             fontWeight: FontWeight.bold,
           ),
         ),
-        subtitle: Text('$category • Tenggat: $dueDate'),
+        subtitle: Text('$category • $dueDate'),
         trailing: PriorityBadge(priority: priority),
       ),
     );

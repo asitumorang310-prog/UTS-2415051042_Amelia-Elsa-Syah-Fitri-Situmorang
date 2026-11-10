@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/task_provider.dart';
 import '../widgets/task_card.dart';
 
 class TaskListScreen extends StatelessWidget {
@@ -6,39 +8,30 @@ class TaskListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final taskProvider = Provider.of<TaskProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Daftar Semua Tugas'),
+        title: Text('Semua Tugas (${taskProvider.totalCount})'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          TaskCard(
-            title: 'Laporan Praktikum Mobile',
-            category: 'Pemrograman Mobile',
-            dueDate: '12 Nov 2026',
-            priority: 'High',
-            isCompleted: false,
-            onTap: () => Navigator.pushNamed(context, '/detail'),
-          ),
-          TaskCard(
-            title: 'Makalah Etika Profesi',
-            category: 'Umum',
-            dueDate: '15 Nov 2026',
-            priority: 'Medium',
-            isCompleted: false,
-            onTap: () => Navigator.pushNamed(context, '/detail'),
-          ),
-          TaskCard(
-            title: 'Quiz Sistem Terdistribusi',
-            category: 'Jaringan',
-            dueDate: '20 Nov 2026',
-            priority: 'Low',
-            isCompleted: true,
-            onTap: () => Navigator.pushNamed(context, '/detail'),
-          ),
-        ],
-      ),
+      body: taskProvider.tasks.isEmpty
+          ? const Center(child: Text('Daftar tugas masih kosong.'))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: taskProvider.tasks.length,
+              itemBuilder: (context, index) {
+                final task = taskProvider.tasks[index];
+                return TaskCard(
+                  title: task.title,
+                  category: task.category,
+                  dueDate: "${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}",
+                  priority: task.priority,
+                  isCompleted: task.isCompleted,
+                  onTap: () => Navigator.pushNamed(context, '/detail', arguments: task.id),
+                  onToggle: () => taskProvider.toggleTaskCompletion(task.id!),
+                );
+              },
+            ),
     );
   }
 }
