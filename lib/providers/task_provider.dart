@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 
+enum TaskState { initial, loading, loaded, error }
+
 class TaskProvider extends ChangeNotifier {
+  TaskState _state = TaskState.loaded;
+  String _errorMessage = '';
+  String _searchQuery = '';
+  String _selectedCategory = 'Semua';
+
   final List<TaskModel> _tasks = [
     TaskModel(
       id: '1',
@@ -23,11 +30,34 @@ class TaskProvider extends ChangeNotifier {
     ),
   ];
 
-  List<TaskModel> get tasks => _tasks;
+  TaskState get state => _state;
+  String get errorMessage => _errorMessage;
+  String get searchQuery => _searchQuery;
+  String get selectedCategory => _selectedCategory;
+
+  // Shared State: Filter pencarian dan kategori
+  List<TaskModel> get tasks {
+    return _tasks.where((task) {
+      final matchesCategory = _selectedCategory == 'Semua' || task.category == _selectedCategory;
+      final matchesSearch = task.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          task.category.toLowerCase().contains(_searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }).toList();
+  }
 
   int get totalCount => _tasks.length;
   int get completedCount => _tasks.where((t) => t.isCompleted).length;
   int get pendingCount => _tasks.where((t) => !t.isCompleted).length;
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
+
+  void setCategoryFilter(String category) {
+    _selectedCategory = category;
+    notifyListeners();
+  }
 
   void addTask(TaskModel task) {
     _tasks.insert(0, task);

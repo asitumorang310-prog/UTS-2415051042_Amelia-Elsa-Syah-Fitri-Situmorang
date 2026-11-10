@@ -12,57 +12,75 @@ class TaskListScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Semua Tugas (${taskProvider.totalCount})'),
+        title: Text('Semua Tugas (${taskProvider.tasks.length})'),
       ),
-      body: taskProvider.tasks.isEmpty
-          ? const Center(child: Text('Daftar tugas masih kosong.'))
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                bool isWide = constraints.maxWidth >= 600;
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Cari tugas...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
+              onChanged: (val) => taskProvider.setSearchQuery(val),
+            ),
+          ),
+          Expanded(
+            child: taskProvider.tasks.isEmpty
+                ? const Center(child: Text('Tugas tidak ditemukan.'))
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      bool isWide = constraints.maxWidth >= 600;
 
-                if (isWide) {
-                  return GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 3.5,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: taskProvider.tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = taskProvider.tasks[index];
-                      return TaskCard(
-                        title: task.title,
-                        category: task.category,
-                        dueDate: "${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}",
-                        priority: task.priority,
-                        isCompleted: task.isCompleted,
-                        onTap: () => Navigator.pushNamed(context, '/detail', arguments: task.id),
-                        onToggle: () => taskProvider.toggleTaskCompletion(task.id!),
+                      if (isWide) {
+                        return GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 3.5,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: taskProvider.tasks.length,
+                          itemBuilder: (context, index) {
+                            final task = taskProvider.tasks[index];
+                            return TaskCard(
+                              title: task.title,
+                              category: task.category,
+                              dueDate: "${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}",
+                              priority: task.priority,
+                              isCompleted: task.isCompleted,
+                              onTap: () => Navigator.pushNamed(context, '/detail', arguments: task.id),
+                              onToggle: () => taskProvider.toggleTaskCompletion(task.id!),
+                            );
+                          },
+                        );
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: taskProvider.tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = taskProvider.tasks[index];
+                          return TaskCard(
+                            title: task.title,
+                            category: task.category,
+                            dueDate: "${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}",
+                            priority: task.priority,
+                            isCompleted: task.isCompleted,
+                            onTap: () => Navigator.pushNamed(context, '/detail', arguments: task.id),
+                            onToggle: () => taskProvider.toggleTaskCompletion(task.id!),
+                          );
+                        },
                       );
                     },
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: taskProvider.tasks.length,
-                  itemBuilder: (context, index) {
-                    final task = taskProvider.tasks[index];
-                    return TaskCard(
-                      title: task.title,
-                      category: task.category,
-                      dueDate: "${task.dueDate.day}/${task.dueDate.month}/${task.dueDate.year}",
-                      priority: task.priority,
-                      isCompleted: task.isCompleted,
-                      onTap: () => Navigator.pushNamed(context, '/detail', arguments: task.id),
-                      onToggle: () => taskProvider.toggleTaskCompletion(task.id!),
-                    );
-                  },
-                );
-              },
-            ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
