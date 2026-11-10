@@ -13,7 +13,6 @@ import 'screens/profile_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inisialisasi Supabase SDK dengan URL dan Key milik Amelia
   await Supabase.initialize(
     url: 'https://zrzvmvbcavaivqismdto.supabase.co',
     anonKey: 'sb_publishable_-S1U4PTGwXueX3hqoIl1Ng_NmSzzejY',
