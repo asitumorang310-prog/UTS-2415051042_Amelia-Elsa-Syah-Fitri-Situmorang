@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/task_provider.dart';
+import '../providers/quote_provider.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/task_card.dart';
 
@@ -10,6 +11,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final taskProvider = Provider.of<TaskProvider>(context);
+    final quoteProvider = Provider.of<QuoteProvider>(context);
     final recentTasks = taskProvider.tasks.take(4).toList();
 
     return Scaffold(
@@ -17,9 +19,9 @@ class HomeScreen extends StatelessWidget {
         title: const Text('TaskMate Dashboard'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_task),
-            onPressed: () => Navigator.pushNamed(context, '/add'),
-            tooltip: 'Tambah Tugas',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => quoteProvider.fetchQuote(),
+            tooltip: 'Refresh Motivasi',
           ),
         ],
       ),
@@ -40,6 +42,11 @@ class HomeScreen extends StatelessWidget {
                   'Kelola tugas perkuliahanmu dengan teratur',
                   style: TextStyle(color: Colors.grey),
                 ),
+                const SizedBox(height: 16),
+
+                // Card Integrasi REST API GET (Motivasi Harian)
+                _buildQuoteCard(context, quoteProvider),
+
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -131,6 +138,74 @@ class HomeScreen extends StatelessWidget {
         onPressed: () => Navigator.pushNamed(context, '/add'),
         icon: const Icon(Icons.add),
         label: const Text('Tugas Baru'),
+      ),
+    );
+  }
+
+  Widget _buildQuoteCard(BuildContext context, QuoteProvider quoteProvider) {
+    return Card(
+      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: const [
+                Icon(Icons.format_quote, size: 20, color: Colors.indigo),
+                SizedBox(width: 8),
+                Text(
+                  'Motivasi Harian (REST API)',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (quoteProvider.status == QuoteStatus.loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              )
+            else if (quoteProvider.status == QuoteStatus.error)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Gagal memuat quote: ${quoteProvider.errorMessage}',
+                      style: const TextStyle(color: Colors.red, fontSize: 12),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, size: 18),
+                    onPressed: () => quoteProvider.fetchQuote(),
+                  ),
+                ],
+              )
+            else if (quoteProvider.quote != null)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '"${quoteProvider.quote!.quote}"',
+                    style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
+                  ),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '— ${quoteProvider.quote!.author}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }

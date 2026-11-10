@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/task_provider.dart';
+import 'providers/quote_provider.dart';
 import 'screens/main_navigation_screen.dart';
 import 'screens/task_list_screen.dart';
 import 'screens/task_detail_screen.dart';
@@ -10,8 +11,11 @@ import 'screens/profile_screen.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => TaskProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => QuoteProvider()..fetchQuote()),
+      ],
       child: const TaskMateApp(),
     ),
   );
