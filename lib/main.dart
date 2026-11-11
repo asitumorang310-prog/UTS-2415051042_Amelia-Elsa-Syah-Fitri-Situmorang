@@ -38,18 +38,20 @@ class TaskMateApp extends StatelessWidget {
       title: 'TaskMate',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-          brightness: Brightness.light,
-        ),
         useMaterial3: true,
-        scaffoldBackgroundColor: Colors.grey[50],
+        scaffoldBackgroundColor: const Color(0xFFFBF7F9), // Background Soft Pink/Off-White
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFFF48FB1), // Soft Pink
+          primary: const Color(0xFFE91E63),   // Deep Pink
+          secondary: const Color(0xFF81C784), // Pastel Green
+          surface: Colors.white,
+        ),
         appBarTheme: const AppBarTheme(
-          centerTitle: false,
-          elevation: 0,
           backgroundColor: Colors.transparent,
+          elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
+        fontFamily: 'Roboto',
       ),
       initialRoute: '/',
       routes: {

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 import '../repositories/task_repository.dart';
@@ -21,16 +22,22 @@ class TaskProvider extends ChangeNotifier {
 
   List<TaskModel> get tasks {
     return _tasks.where((task) {
-      final matchesCategory = _selectedCategory == 'Semua' || task.category == _selectedCategory;
-      final matchesSearch = task.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesCategory = _selectedCategory == 'Semua' ||
+          task.category == _selectedCategory;
+
+      final matchesSearch =
+          task.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           task.category.toLowerCase().contains(_searchQuery.toLowerCase());
+
       return matchesCategory && matchesSearch;
     }).toList();
   }
 
   int get totalCount => _tasks.length;
-  int get completedCount => _tasks.where((t) => t.isCompleted).length;
-  int get pendingCount => _tasks.where((t) => !t.isCompleted).length;
+  int get completedCount =>
+      _tasks.where((t) => t.isCompleted).length;
+  int get pendingCount =>
+      _tasks.where((t) => !t.isCompleted).length;
 
   Future<void> fetchTasksFromDatabase() async {
     _status = TaskStatus.loading;
@@ -44,6 +51,7 @@ class TaskProvider extends ChangeNotifier {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _status = TaskStatus.error;
     }
+
     notifyListeners();
   }
 
@@ -64,61 +72,82 @@ class TaskProvider extends ChangeNotifier {
     }
   }
 
-  // Update Feature (Tahap 11)
-  Future<void> updateTask(String id, TaskModel updatedTask) async {
-    try {
-      final result = await _repository.updateTask(id, updatedTask);
-      final index = _tasks.indexWhere((t) => t.id == id);
-      if (index != -1) {
-        _tasks[index] = result;
-        notifyListeners();
-      }
-    } catch (e) {
-      rethrow;
+  // UPDATE TASK
+  Future<void> updateTask(
+    String id,
+    TaskModel updatedTask,
+  ) async {
+    final result = await _repository.updateTask(id, updatedTask);
+
+    final index = _tasks.indexWhere((t) => t.id == id);
+
+    if (index != -1) {
+      _tasks[index] = result;
+      notifyListeners();
     }
   }
 
-  // Toggle Complete status ke Database
-  Future<void> toggleTaskCompletion(String id) async {
+  // TOGGLE TASK COMPLETION + OPTIMISTIC UPDATE
+  Future<bool> toggleTaskCompletion(String id) async {
     final index = _tasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      final task = _tasks[index];
-      final updatedTask = TaskModel(
-        id: task.id,
-        title: task.title,
-        description: task.description,
-        category: task.category,
-        priority: task.priority,
-        dueDate: task.dueDate,
-        isCompleted: !task.isCompleted,
+
+    if (index == -1) {
+      throw Exception('Tugas tidak ditemukan.');
+    }
+
+    final originalTask = _tasks[index];
+    final newStatus = !originalTask.isCompleted;
+
+    final updatedTask = TaskModel(
+      id: originalTask.id,
+      title: originalTask.title,
+      description: originalTask.description,
+      category: originalTask.category,
+      priority: originalTask.priority,
+      dueDate: originalTask.dueDate,
+      isCompleted: newStatus,
+    );
+
+    // Ubah tampilan langsung
+    _tasks[index] = updatedTask;
+    notifyListeners();
+
+    try {
+      // Simpan perubahan ke Supabase
+      final result = await _repository.updateTask(
+        id,
+        updatedTask,
       );
 
-      try {
-        final result = await _repository.updateTask(id, updatedTask);
-        _tasks[index] = result;
-        notifyListeners();
-      } catch (e) {
-        notifyListeners();
-      }
-    }
-  }
-
-  // Delete Feature (Tahap 12)
-  Future<void> deleteTask(String id) async {
-    try {
-      await _repository.deleteTask(id);
-      _tasks.removeWhere((t) => t.id == id);
+      _tasks[index] = result;
       notifyListeners();
+
+      return result.isCompleted;
     } catch (e) {
-      rethrow;
+      // Kembalikan status jika gagal
+      _tasks[index] = originalTask;
+      notifyListeners();
+
+      throw Exception(
+        'Gagal memperbarui tugas. Periksa koneksi internet.',
+      );
     }
   }
 
+  // DELETE TASK
+  Future<void> deleteTask(String id) async {
+    await _repository.deleteTask(id);
+    _tasks.removeWhere((t) => t.id == id);
+    notifyListeners();
+  }
+
+  // SEARCH
   void setSearchQuery(String query) {
     _searchQuery = query;
     notifyListeners();
   }
 
+  // CATEGORY FILTER
   void setCategoryFilter(String category) {
     _selectedCategory = category;
     notifyListeners();
